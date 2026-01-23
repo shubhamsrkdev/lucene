@@ -348,12 +348,50 @@ abstract class MemorySegmentIndexInput extends IndexInput implements MemorySegme
         offset,
         length,
         segment -> {
-          if (segment.isLoaded() == false) {
+          if (isProbablyLoaded(segment) == false) {
             // We have a cache miss on at least one page, let's reset the counter.
             sharedPrefetchCounter.set(0);
             nativeAccess.madviseWillNeed(segment);
           }
         });
+  }
+
+  /**
+   * Checks if a memory segment is probably loaded in RAM by sampling a subset of its pages.
+   *
+   * <p>It samples at most 3 pages evenly distributed across the segment (start, middle, end) and
+   * checks if they are loaded in RAM. If any sampled page is not loaded, the segment is considered
+   * not loaded.
+   *
+   * @param segment the memory segment to check
+   * @return true if all sampled pages are loaded in RAM or if native access is unavailable, false
+   *     if any sampled page is not loaded.
+   */
+  private boolean isProbablyLoaded(MemorySegment segment) {
+    if (NATIVE_ACCESS.isEmpty()) {
+      return true;
+    }
+
+    final long pageSize = NATIVE_ACCESS.get().getPageSize(); // 4
+    final long segmentSize = segment.byteSize(); // 800
+    // Sample at most 3 pages: start, middle, end
+    final int maxSamples = Math.min(3, (int) ((segmentSize + pageSize - 1) / pageSize));
+
+    for (int i = 0; i < maxSamples; i++) {
+      long offset = (i * segmentSize) / maxSamples; // 0
+      offset = (offset / pageSize) * pageSize; // 0
+
+      if (offset + pageSize > segmentSize) {
+        offset = Math.max(0, segmentSize - pageSize);
+      }
+
+      long sliceSize = Math.min(pageSize, segmentSize - offset); // 4
+      if (segment.asSlice(offset, sliceSize).isLoaded() == false) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
