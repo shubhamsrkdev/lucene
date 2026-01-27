@@ -347,7 +347,7 @@ abstract class MemorySegmentIndexInput extends IndexInput implements MemorySegme
         offset,
         length,
         segment -> {
-          if (isProbablyLoaded(segment)) {
+          if (segment.isLoaded() == false) {
             return false;
           } else {
             // We have a cache miss on at least one page, let's reset the counter.
@@ -356,37 +356,6 @@ abstract class MemorySegmentIndexInput extends IndexInput implements MemorySegme
             return true;
           }
         });
-  }
-
-  public boolean isProbablyLoaded(MemorySegment segment) {
-    if (NATIVE_ACCESS.isEmpty()) {
-      return true;
-    }
-
-    final NativeAccess nativeAccess = NATIVE_ACCESS.get();
-    final long pageSize = nativeAccess.getPageSize();
-    final long segmentSize = segment.byteSize();
-
-    // Sample at most 3 pages: start, middle, end
-    final int maxSamples = Math.min(3, (int) ((segmentSize + pageSize - 1) / pageSize));
-
-    for (int i = 0; i < maxSamples; i++) {
-      long offset = (i * segmentSize) / maxSamples;
-      offset = (offset / pageSize) * pageSize; // Align to page boundary
-
-      if (offset + pageSize > segmentSize) {
-        offset = segmentSize - pageSize;
-      }
-
-      if (offset >= 0) {
-        MemorySegment pageSlice = segment.asSlice(offset, Math.min(pageSize, segmentSize - offset));
-        if (!pageSlice.isLoaded()) {
-          return false;
-        }
-      }
-    }
-
-    return true;
   }
 
   @Override
