@@ -187,7 +187,7 @@ New Features
 
 Improvements
 ---------------------
-(No changes)
+* GITHUB#15711: DirectoryTaxonomyReader.getBulkPath() now uses getPathFromCache. (Shubham Sharma)
 
 Optimizations
 ---------------------
