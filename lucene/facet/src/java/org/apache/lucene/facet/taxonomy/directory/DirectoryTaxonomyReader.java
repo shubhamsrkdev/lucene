@@ -557,7 +557,6 @@ public class DirectoryTaxonomyReader extends TaxonomyReader implements Accountab
 
     for (int i = 0; i < uncachedLength; i++) {
       int ord = ordinals[i];
-      int idx = originalPosition[i];
       /*
       If ord >= leafReaderDocBase + leafReaderMaxDoc then we find the next leaf that contains our ordinal.
       Remember: ord operates in the global ordinal space and hence we add leafReaderDocBase to the leafReaderMaxDoc
@@ -570,21 +569,11 @@ public class DirectoryTaxonomyReader extends TaxonomyReader implements Accountab
         leafReaderMaxDoc = leafReader.maxDoc();
         leafReaderDocBase = leafReaderContext.docBase;
         values = leafReader.getBinaryDocValues(Consts.FULL);
-
-        /*
-        If the index is constructed with the older StoredFields it will not have any BinaryDocValues field and will return null
-         */
-        if (values == null) {
-          for (int j = 0; j < uncachedLength; j++) {
-            bulkPath[originalPosition[j]] = getPath(ordinals[j]);
-          }
-          return bulkPath;
-        }
       }
       // values is leaf specific, so you only advance till you reach the target within the leaf
       boolean success = values.advanceExact(ord - leafReaderDocBase);
       assert success;
-      bulkPath[idx] =
+      bulkPath[originalPosition[i]] =
           new FacetLabel(FacetsConfig.stringToPath(values.binaryValue().utf8ToString()));
     }
 
