@@ -7,6 +7,22 @@ http://s.apache.org/luceneversions
 
 API Changes
 ---------------------
+
+* GITHUB#15763: Deprecate Operations.complement() method. This operation can be slow and is not
+  recommended for production use. It will be removed in Lucene 12. (Saurabh Singh)
+
+* GITHUB#15755: Deprecate Operations.minus() method. This slow operation has been moved to
+  AutomatonTestUtil.minus() for testing purposes only. The method will be removed in Lucene 12.
+  (Saurabh Singh)
+
+* GITHUB#15762: Remove deprecated Operations.concatenate(Automaton, Automaton) and
+  Operations.union(Automaton, Automaton) methods. Use the List/Collection variants instead.
+  (Saurabh Singh)
+
+* GITHUB#15750: Remove deprecated RegExp complement syntax support. The DEPRECATED_COMPLEMENT flag,
+  REGEXP_DEPRECATED_COMPLEMENT enum value, and makeDeprecatedComplement method have been removed.
+  Users should use complement bracket expressions ([^...]) instead. (Saurabh Singh)
+
 * GITHUB#15517: Remove newHashMap, newHashSet from CollectionUtil, and use HashMap.newHashMap, HashSet.newHashSet
   directly. (Zhou Hui)
 
@@ -68,6 +84,8 @@ New Features
 
 * GITHUB#14178: Add a Faiss-based vector format in the sandbox module. (Kaival Parikh)
 
+* GITHUB#15508: Use native vectorization in Lucene. (Ankur Goel, Shubham Chaudhary, Dawid Weiss)
+
 Improvements
 ---------------------
 
@@ -88,6 +106,8 @@ Improvements
 * GITHUB#15124: Use RamUsageEstimator to calculate size for non-accountable queries. (Sagar Upadhyaya)
 
 * GITHUB#15453: Avoid unnecessary sorting and instantiations in readMapOfStrings. (Benjamin Lerer)
+
+* GITHUB#15225: Improve package documentation for org.apache.lucene.util. (Syed Mohammad Saad)
 
 Optimizations
 ---------------------
@@ -131,6 +151,9 @@ Bug Fixes
 
 * GITHUB#12561: UAX29URLEmailTokenizer matched emails with commas and invalid
   periods in the local part. (Eran Yarkon)
+
+* GITHUB#14971: Fix CachedExecutor thread pool leak in ConcurrentMergeScheduler
+  when IndexWriter initialization fails. (Su Beom)
 
 Changes in Runtime Behavior
 ---------------------
@@ -181,23 +204,43 @@ API Changes
 * GITHUB#15663: Allow subclasses of NumericComparator to implement their own
   CompetitiveDISIBuilder subtypes. (Alan Woodward)
 
+* GITHUB#15636: Introduce TermsEnum.preferSeekExact(). Update and delete processing obey this setting,
+  allowing bloom or other approximate membership filters to apply in these paths. (Trevor McCulloch)
+
+* GITHUB#15723: Add hook for LRUQueryCache to allow custom population strategies (Nhat Nguyen)
+
+* GITHUB#15751: Prevent zero vectors in knn fields with cosine similarity configured (Vigya Sharma)
+
 New Features
 ---------------------
-(No changes)
+
+* GITHUB#15740: Add NumericFieldStats utility for retrieving global numeric field statistics
+  (min, max, doc count) from index metadata structures. Migrate SortedNumericDocValuesRangeQuery
+  to use this API, fixing the rewrite optimization for fields with PointValues but no skip index.
+  (Salvatore Campagna)
 
 Improvements
 ---------------------
 * GITHUB#15711: DirectoryTaxonomyReader.getBulkPath() now uses getPathFromCache. (Shubham Sharma)
 
+* GITHUB#15757: Better skipper-based numeric sort pruning from the start of segments (Alan Woodward)
+
+* GITHUB#15753: Add Case Insensitive makeChar and makeString to Automata. (John Wagster)
+
 Optimizations
 ---------------------
 * GITHUB#15637: Lazily allocate ByteArrayDataInputs in SegmentTermsEnumFrame#15637 (Misha Dmitriev)
+
+* GITHUB#15718 Skip per-document stored field reads on sorted indices when no stored fields are present (Francisco Fernández Castaño)
+
+* GITHUB#15729: Lucene90DocValuesProducer is not prefetching any data for DocValueSkippers anymore (Alexander Reelsen)
 
 Bug Fixes
 ---------------------
 * GITHUB#15668: Fix UnsupportedOperationException in WeightedSpanTermExtractor by
   implementing getFieldInfos in DelegatingLeafReader. (Simranjeet Singh)
 
+* GITHUB#15702: Fix Potential NullPointException in BytesRefHash initialization#15702 (tyronecai)
 
 Other
 ---------------------
@@ -359,7 +402,8 @@ Optimizations
 
 * GITHUB#15498: ExitableDirectoryReader keeps singleton SortedSetDocValues or SortedNumericDocValues as singletons. (Houston Putman)
 
-* GITHUB#15511, GITHUB#15696: Dynamic pruning for SORTED(_SET) fields with doc values skipper (Pan Guixin, Alan Woodward)
+* GITHUB#15511, GITHUB#15696, GITHUB#15709, GITHUB#15741: Dynamic pruning for SORTED(_SET) fields with doc
+  values skipper (Pan Guixin, Alan Woodward)
 
 * GITHUB#15560: Avoid unnecessary getGraph() call. (Shubham Chaudhary)
 
@@ -410,6 +454,9 @@ Bug Fixes
 
 * GITHUB#15553: Fix MergedByteVectorValues lastOrd behavior to enable partitioning of vector values
 (Finn Roblin, Dooyong Kim)
+
+* GITHUB#15695: Fix Tessellation error for holes that share the same leftmost vertex with an outer ring vertex
+  (Robert Burris)
 
 Other
 ---------------------
@@ -831,7 +878,6 @@ Improvements
 
 * GITHUB#14239: Hunspell's option to tolerate affix rule count mismatches was
   improved to tolerate more instances of this problem.  (Robert Muir)
-
 
 * GITHUB#14238: Improve test coverage of Dynamic Range Faceting. (John Houser)
 
